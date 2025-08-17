@@ -1,5 +1,5 @@
 
-import { calculateRepaymentJourney } from "../../packages/engine/src/main.js";
+import { calculateRepaymentJourney } from "../../packages/engine/dist/index.js";
 
 // ---------- DOM helpers ----------
 const $ = (sel) => document.querySelector(sel);

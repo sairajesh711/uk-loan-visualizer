@@ -1,2 +1,2 @@
-// Allow TS build to re-export the pure JS engine
-export { calculateRepaymentJourney, Money, Loan, OverpaymentSimulator } from "./main.js";
+export * from "./types";
+export { Money, Loan, OverpaymentSimulator, calculateRepaymentJourney } from "./main";
