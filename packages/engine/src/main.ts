@@ -111,13 +111,84 @@ export class OverpaymentSimulator {
   }
 }
 
+// ---------- NEW: Investment projector ----------
+interface ReturnPolicy { monthlyRate(monthIndex: number): number; }
+
+class FixedAnnualReturn implements ReturnPolicy {
+  private readonly rMonthly: number;
+  constructor(annualRatePercent: number) {
+    const a = Math.max(0, annualRatePercent) / 100; // clamp negative to 0
+    this.rMonthly = Math.pow(1 + a, 1 / 12) - 1;     // effective monthly
+  }
+  monthlyRate(): number { return this.rMonthly; }
+}
+
+class InvestmentProjector {
+  constructor(private readonly policy: ReturnPolicy) {}
+
+  // DCA: invest 'contribution' each month, end-of-month timing
+  projectDCA(contribution: Money, months: number): Money {
+    if (months <= 0 || contribution.pence <= 0) return Money.fromPence(0);
+    const r = this.policy.monthlyRate(0);
+    if (Math.abs(r) < 1e-10) return Money.fromPence(contribution.pence * months);
+    const factor = (Math.pow(1 + r, months) - 1) / r;
+    return Money.fromPence(Math.round(contribution.pence * factor));
+  }
+
+  // Annual return needed for FV(contribution, months) == targetFV
+  requiredAnnualReturn(contribution: Money, months: number, targetFV: Money): number {
+    if (targetFV.pence <= 0 || contribution.pence <= 0 || months <= 0) return 0;
+    
+    const target = targetFV.pence / contribution.pence;
+    
+    // If target is less than months, no positive return needed
+    if (target <= months) return 0;
+    
+    let lo = 0, hi = 0.5; // 0..50% monthly (very wide upper bound)
+    
+    // Binary search for monthly rate
+    for (let i = 0; i < 100; i++) {
+      const mid = (lo + hi) / 2;
+      const factor = mid === 0 ? months : (Math.pow(1 + mid, months) - 1) / mid;
+      
+      if (Math.abs(factor - target) < 1e-10) break; // Close enough
+      
+      if (factor < target) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    
+    const r_m = (lo + hi) / 2;
+    const r_annual = Math.pow(1 + r_m, 12) - 1;
+    return r_annual * 100;
+  }
+}
+
 // ---------- Facade: pure function ----------
-export function calculateRepaymentJourney(input: LoanInput): RepaymentJourney {
+export function calculateRepaymentJourney(input: LoanInput & {
+  expectedAnnualReturnPercent?: number; // NEW optional
+  fairCompare?: boolean;                // NEW optional
+}): RepaymentJourney & {
+  invest: {
+    expectedAnnualReturnPercent: number;
+    fvInvest: number;                   // invest overpayment (DCA) until baseline end
+    deltaVsOverpaySimple: number;       // fvInvest - interestSaved
+    requiredAnnualReturnPercent: number;// break-even vs overpay (simple)
+    fair?: {
+      reinvestFreedPaymentFV: number;   // invest regular payment after early payoff
+      deltaNetWorth: number;            // fair.reinvestFreedPaymentFV - fvInvest
+    }
+  }
+} {
   const {
     outstandingBalance,
     remainingTermMonths,
     aprPercent,
-    monthlyOverpayment
+    monthlyOverpayment,
+    expectedAnnualReturnPercent = 0,
+    fairCompare = true
   } = input;
 
   const invalid =
@@ -143,13 +214,40 @@ export function calculateRepaymentJourney(input: LoanInput): RepaymentJourney {
   const interestSaved = Math.max(0, baseline.totalInterest - withOverpay.totalInterest);
   const monthsSaved = Math.max(0, baseline.months - withOverpay.months);
 
+  // --- NEW: Investing the overpayment instead (simple H1 horizon) ---
+  const projector = new InvestmentProjector(new FixedAnnualReturn(expectedAnnualReturnPercent));
+  const fvInvest = projector.projectDCA(Money.fromPounds(monthlyOverpayment), baseline.months).toNumber();
+  const requiredAnnualReturnPercent =
+    projector.requiredAnnualReturn(Money.fromPounds(monthlyOverpayment), baseline.months, Money.fromPounds(interestSaved));
+  const deltaVsOverpaySimple = fvInvest - interestSaved;
+
+  // --- NEW: Fair compare (invest freed regular payment after early payoff) ---
+  let fair: { reinvestFreedPaymentFV: number; deltaNetWorth: number } | undefined = undefined;
+  if (fairCompare && monthsSaved > 0) {
+    const regularPayment = loan.requiredMonthlyPayment(); // baseline required payment
+    const freedMonths = monthsSaved;
+    const reinvestFV = projector.projectDCA(regularPayment, freedMonths).toNumber();
+    fair = {
+      reinvestFreedPaymentFV: reinvestFV,
+      deltaNetWorth: reinvestFV - fvInvest
+    };
+  }
+
   return {
     baseline,
     withOverpay,
     interestSaved,
     monthsSaved,
-    schedule: withOverpay.schedule
+    schedule: withOverpay.schedule,
+    invest: {
+      expectedAnnualReturnPercent,
+      fvInvest,
+      deltaVsOverpaySimple,
+      requiredAnnualReturnPercent,
+      fair
+    }
   };
 }
 
 export type { LoanInput, RepaymentJourney, Simulation, ScheduleEntry };
+export { FixedAnnualReturn, InvestmentProjector };

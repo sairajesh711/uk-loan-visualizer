@@ -179,6 +179,17 @@
             <input id="overpayMonthly" name="overpayMonthly" type="range" min="0" max="5000" step="50" value="0" />
             <div class="help">Adjust how much extra you might pay each month. (Display value updates in a later commit.)</div>
           </div>
+
+          <div class="field range">
+            <div class="range-head">
+              <label for="expectedReturn">Expected Annual Return (%)</label>
+              <span class="value" id="expectedReturnValue">4.0%</span>
+            </div>
+            <input id="expectedReturn" name="expectedReturn" type="range" min="0" max="15" step="0.1" value="4.0" />
+            <div class="help">
+              Recommended (deposit / risk-free proxy): <span id="recommendedRate">4.0%</span>
+            </div>
+          </div>
         </form>
       </section>
 
@@ -210,6 +221,24 @@
             <div class="big dash" id="result-monthsSaved">—</div>
             <div class="help">How many months earlier you finish vs baseline.</div>
           </div>
+
+          <div class="card">
+            <div class="eyebrow">If Invested Instead (by original payoff date)</div>
+            <div class="big dash" id="result-fvInvest">—</div>
+            <div class="help">Value if you invested the monthly overpayment until the original payoff date.</div>
+          </div>
+
+          <div class="card">
+            <div class="eyebrow">Δ Invest − Overpay (simple)</div>
+            <div class="big dash" id="result-deltaSimple">—</div>
+            <div class="help">Positive means investing beats overpaying (simple horizon).</div>
+          </div>
+
+          <div class="card">
+            <div class="eyebrow">Break-even Return (annual)</div>
+            <div class="big dash" id="result-breakEven">—</div>
+            <div class="help">Annual return needed for investing to match overpay's interest saved.</div>
+          </div>
         </div>
 
         <div class="panel" aria-label="Visualisations" style="margin-top:18px">
@@ -225,7 +254,7 @@
     </main>
 
     <footer class="muted" style="margin-top:18px">
-      v0.5 — Interactive charts with Chart.js! Balance timeline + interest comparison.
+      v0.6 — Investment analysis! Compare overpaying vs investing with expected return calculations.
     </footer>
   </div>
 </body>
