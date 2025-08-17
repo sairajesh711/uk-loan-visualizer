@@ -98,14 +98,38 @@
       background: #0f1114; border: 1px dashed #2a2f37; border-radius: 12px; height: 220px;
       display: grid; place-items: center; color: #8b95a7; font-size: 13px;
     }
+
+    .banner {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin: 12px 0 18px;
+      display: grid;
+      gap: 6px;
+    }
+    .banner.error {
+      background: #1b1112;      /* subtle red-ish on your dark theme */
+      border-color: #3a1719;
+      color: #f8d7da;
+    }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <h1>UK Loan Visualiser</h1>
-      <div aria-live="polite" class="muted">Commit 1: Static UI only (no calculations yet)</div>
+      <div aria-live="polite" class="muted">Commit 3: Now with live calculations! Engine connected.</div>
     </header>
+
+    <div id="statusPill" class="muted" style="font-size:12px;margin:6px 0 12px;">
+      Engine: <span id="statusText">loading…</span>
+    </div>
+
+    <div id="errorBanner" class="banner error hidden" role="alert" aria-live="assertive">
+      <strong>Check your inputs</strong>
+      <div id="errorText" class="muted" style="color:#f5c2c7">—</div>
+    </div>
 
     <main class="grid" role="main">
       <!-- Left: Inputs -->
@@ -188,16 +212,24 @@
           </div>
         </div>
 
-        <div class="chart" role="img" aria-label="Balance over time (placeholder)">
-          Balance over time — chart placeholder
+        <div class="panel" aria-label="Visualisations" style="margin-top:18px">
+          <h2>Visualisations</h2>
+          <div class="chart" role="img" aria-label="Balance over time">
+            <canvas id="balanceChart" height="220"></canvas>
+          </div>
+          <div class="chart" role="img" aria-label="Total interest comparison" style="margin-top:12px">
+            <canvas id="interestBarChart" height="180"></canvas>
+          </div>
         </div>
       </section>
     </main>
 
     <footer class="muted" style="margin-top:18px">
-      v0.3 — Now with live calculations! Engine connected.
+      v0.5 — Interactive charts with Chart.js! Balance timeline + interest comparison.
     </footer>
   </div>
 </body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.umd.min.js"></script>
 <script type="module" src="./main.js"></script>
 </html>
