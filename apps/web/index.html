@@ -129,20 +129,20 @@
 
           <div class="field">
             <label for="outstandingBalance">Outstanding Balance (£)</label>
-            <input id="outstandingBalance" name="outstandingBalance" type="number" inputmode="decimal" placeholder="250000" aria-describedby="outstandingHelp" />
+            <input id="outstandingBalance" name="outstandingBalance" min="1" type="number" inputmode="decimal" placeholder="250000" aria-describedby="outstandingHelp" />
             <div id="outstandingHelp" class="help">Remaining principal today (e.g., 250000).</div>
           </div>
 
           <div class="row">
             <div class="field">
               <label for="remainingTermMonths">Remaining Term (months)</label>
-              <input id="remainingTermMonths" name="remainingTermMonths" type="number" inputmode="numeric" placeholder="300" aria-describedby="termHelp" />
+              <input id="remainingTermMonths" name="remainingTermMonths" min="1" type="number" inputmode="numeric" placeholder="300" aria-describedby="termHelp" />
               <div id="termHelp" class="help">Months left on the loan (e.g., 300 = 25 years).</div>
             </div>
 
             <div class="field">
               <label for="interestApr">Interest Rate (APR %)</label>
-              <input id="interestApr" name="interestApr" type="number" inputmode="decimal" placeholder="4.25" step="0.01" aria-describedby="aprHelp" />
+              <input id="interestApr" name="interestApr" type="number" inputmode="decimal" placeholder="4.25" min="0" step="0.01" aria-describedby="aprHelp" />
               <div id="aprHelp" class="help">Annual Percentage Rate (e.g., 4.25).</div>
             </div>
           </div>
