@@ -682,5 +682,25 @@ elOverpay?.addEventListener("change", scheduleRecompute);
 elExpectedReturn?.addEventListener("input", scheduleRecompute);
 elExpectedReturn?.addEventListener("change", scheduleRecompute);
 
+// Preset buttons
+$("#preset-mortgage")?.addEventListener("click", () => {
+  elTypeMortgage.checked = true;
+  elTypePersonal.checked = false;
+  elOutstanding.value = "250000";
+  elMonths.value = "300";
+  elApr.value = "4.5";
+  elOverpay.value = "200";
+  applyLoanTypeUI();
+});
+$("#preset-personal")?.addEventListener("click", () => {
+  elTypePersonal.checked = true;
+  elTypeMortgage.checked = false;
+  elOutstanding.value = "10000";
+  elMonths.value = "60";
+  elApr.value = "9.9";
+  elOverpay.value = "50";
+  applyLoanTypeUI();
+});
+
 // Boot
 applyLoanTypeUI();
