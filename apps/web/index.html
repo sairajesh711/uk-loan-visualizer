@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>UK Loan Visualiser — MVP Shell</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <style>
     :root {
       --bg: #0b0c0e;
@@ -115,7 +116,7 @@
     .hidden { display: none !important; }
   </style>
 </head>
-<body>
+<body data-bs-theme="dark">
   <div class="container">
     <header>
       <h1>UK Loan Visualiser</h1>
@@ -126,9 +127,9 @@
       Engine: <span id="statusText">loading…</span>
     </div>
 
-    <div id="errorBanner" class="banner error hidden" role="alert" aria-live="assertive">
+    <div id="errorBanner" class="alert alert-danger d-none" role="alert" aria-live="assertive">
       <strong>Check your inputs</strong>
-      <div id="errorText" class="muted" style="color:#f5c2c7">—</div>
+      <div id="errorText" class="small opacity-75">—</div>
     </div>
 
     <main class="grid" role="main">
@@ -151,42 +152,42 @@
         <form aria-describedby="formHelp" autocomplete="off">
           <p id="formHelp" class="help">These fields describe your <em>existing</em> loan. Calculations update live as you type.</p>
 
-          <div class="field">
-            <label for="outstandingBalance">Outstanding Balance (£)</label>
-            <input id="outstandingBalance" name="outstandingBalance" min="1" type="number" inputmode="decimal" placeholder="250000" aria-describedby="outstandingHelp" />
-            <div id="outstandingHelp" class="help">Remaining principal today (e.g., 250000).</div>
+          <div class="field mb-3">
+            <label for="outstandingBalance" class="form-label">Outstanding Balance (£)</label>
+            <input id="outstandingBalance" name="outstandingBalance" min="1" type="number" inputmode="decimal" placeholder="250000" class="form-control" aria-describedby="outstandingHelp" />
+            <div id="outstandingHelp" class="form-text">Remaining principal today (e.g., 250000).</div>
           </div>
 
           <div class="row">
-            <div class="field">
-              <label for="remainingTermMonths">Remaining Term (months)</label>
-              <input id="remainingTermMonths" name="remainingTermMonths" min="1" type="number" inputmode="numeric" placeholder="300" aria-describedby="termHelp" />
-              <div id="termHelp" class="help">Months left on the loan (e.g., 300 = 25 years).</div>
+            <div class="field mb-3">
+              <label for="remainingTermMonths" class="form-label">Remaining Term (months)</label>
+              <input id="remainingTermMonths" name="remainingTermMonths" min="1" type="number" inputmode="numeric" placeholder="300" class="form-control" aria-describedby="termHelp" />
+              <div id="termHelp" class="form-text">Months left on the loan (e.g., 300 = 25 years).</div>
             </div>
 
-            <div class="field">
-              <label for="interestApr">Interest Rate (APR %)</label>
-              <input id="interestApr" name="interestApr" type="number" inputmode="decimal" placeholder="4.25" min="0" step="0.01" aria-describedby="aprHelp" />
-              <div id="aprHelp" class="help">Annual Percentage Rate (e.g., 4.25).</div>
+            <div class="field mb-3">
+              <label for="interestApr" class="form-label">Interest Rate (APR %)</label>
+              <input id="interestApr" name="interestApr" type="number" inputmode="decimal" placeholder="4.25" min="0" step="0.01" class="form-control" aria-describedby="aprHelp" />
+              <div id="aprHelp" class="form-text">Annual Percentage Rate (e.g., 4.25).</div>
             </div>
           </div>
 
-          <div class="field range">
-            <div class="range-head">
-              <label for="overpayMonthly">Monthly Overpayment (£)</label>
+          <div class="field range mb-3">
+            <div class="d-flex justify-content-between align-items-baseline">
+              <label for="overpayMonthly" class="form-label mb-1">Monthly Overpayment (£)</label>
               <span class="value" id="overpayValue" aria-live="polite">£0</span>
             </div>
-            <input id="overpayMonthly" name="overpayMonthly" type="range" min="0" max="5000" step="50" value="0" />
-            <div class="help">Adjust how much extra you might pay each month.</div>
+            <input id="overpayMonthly" name="overpayMonthly" type="range" min="0" max="5000" step="50" value="0" class="form-range" />
+            <div class="form-text">Adjust how much extra you might pay each month.</div>
           </div>
 
-          <div class="field range">
-            <div class="range-head">
-              <label for="expectedReturn">Expected Annual Return (%)</label>
+          <div class="field range mb-2">
+            <div class="d-flex justify-content-between align-items-baseline">
+              <label for="expectedReturn" class="form-label mb-1">Expected Annual Return (%)</label>
               <span class="value" id="expectedReturnValue" aria-live="polite">4.0%</span>
             </div>
-            <input id="expectedReturn" name="expectedReturn" type="range" min="0" max="15" step="0.1" value="4.0" />
-            <div class="help">
+            <input id="expectedReturn" name="expectedReturn" type="range" min="0" max="15" step="0.1" value="4.0" class="form-range" />
+            <div class="form-text">
               Recommended (deposit / risk-free proxy): <span id="recommendedRate">4.0%</span>
             </div>
           </div>
@@ -266,6 +267,7 @@
   <!-- libs first, then app -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module" src="./main.js"></script>
 </body>
 </html>
