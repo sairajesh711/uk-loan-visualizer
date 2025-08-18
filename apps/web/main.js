@@ -297,8 +297,7 @@ function upsertBalanceChart(series) {
       borderWidth: 2,
       label: {
         enabled: true,
-        position: "start",
-        content: `Original payoff: ${formatMMMYYYY(addMonths(new Date(), series.baselineMonths))}`
+        content: `Original: ${formatMMMYYYY(addMonths(new Date(), series.baselineMonths))}`
       }
     },
     overpayPayoff: {
@@ -309,8 +308,7 @@ function upsertBalanceChart(series) {
       borderWidth: 2,
       label: {
         enabled: true,
-        position: "start",
-        content: `With overpay: ${formatMMMYYYY(addMonths(new Date(), series.overpayMonths))}`
+        content: `Overpay: ${formatMMMYYYY(addMonths(new Date(), series.overpayMonths))}`
       }
     }
   };
