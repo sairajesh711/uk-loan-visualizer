@@ -45,11 +45,11 @@ const elErrorText = $("#errorText");
 const statusText = $("#statusText");
 function showError(msg) {
   if (elErrorText) elErrorText.textContent = String(msg || "Invalid input.");
-  elErrorBanner?.classList.remove("hidden");
+  elErrorBanner?.classList.remove("d-none");
 }
 function clearError() {
   if (elErrorText) elErrorText.textContent = "";
-  elErrorBanner?.classList.add("hidden");
+  elErrorBanner?.classList.add("d-none");
 }
 function setStatus(msg) {
   if (statusText) statusText.textContent = msg;
@@ -75,6 +75,17 @@ function applyRecommendedRate() {
 if (window.Chart && window["chartjs-plugin-annotation"]) {
   window.Chart.register(window["chartjs-plugin-annotation"]);
 }
+
+// Align Chart.js typography/colors with Bootstrap (if present)
+try {
+  if (window.Chart) {
+    const s = getComputedStyle(document.body);
+    const bsFont = s.getPropertyValue('--bs-body-font-family')?.trim();
+    const bsColor = s.getPropertyValue('--bs-body-color')?.trim();
+    if (bsFont) window.Chart.defaults.font.family = bsFont;
+    if (bsColor) window.Chart.defaults.color = bsColor;
+  }
+} catch {}
 
 // Chart references
 let balanceChart = null;
