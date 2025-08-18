@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Ensure all relative URLs resolve from /apps/web/ -->
+  <base href="/apps/web/">
+
   <title>UK Loan Visualiser — A Decision-Making Tool</title>
 
   <!-- Google Fonts: Manrope -->
@@ -11,205 +15,83 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
 
   <style>
-    /*
-    --- DESIGN PHILOSOPHY ---
-    Theme: "Clarity & Confidence"
-    The UI is designed to feel like a trustworthy, high-end financial dashboard.
-    It's clean, spacious, and uses a consistent design system to empower users
-    to make informed decisions without distraction.
-
-    - Typography: Manrope for a modern, professional, and highly legible feel.
-    - Layout: A sticky sidebar for inputs and a main content area for results,
-      creating a common and intuitive dashboard pattern.
-    - Spacing: A consistent 8px-based scale for all margins, padding, and gaps.
-    - Components: All elements share a consistent border-radius, color palette,
-      and interaction style.
-    */
-
-    /* ---- Design Tokens ---- */
     :root {
-      --bg: #0f172a;
-      --panel: #1e293b;
-      --card: #1e293b;
-      --border: #334155;
-      --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-      --text-muted: #64748b;
-      --accent: #38bdf8;
-      --accent-dark: #0ea5e9;
-
+      --bg: #0f172a; --panel: #1e293b; --card: #1e293b; --border: #334155;
+      --text-primary: #f8fafc; --text-secondary: #cbd5e1; --text-muted: #94a3b8;
+      --accent: #38bdf8; --accent-dark: #0ea5e9;
       --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      
-      --space-xs: 4px;
-      --space-sm: 8px;
-      --space-md: 16px;
-      --space-lg: 24px;
-      --space-xl: 32px;
-
-      --radius: 12px;
-      --shadow: 0 10px 30px rgba(0,0,0,.2);
+      --space-xs: 4px; --space-sm: 8px; --space-md: 16px; --space-lg: 24px; --space-xl: 32px;
+      --radius: 12px; --shadow: 0 10px 30px rgba(0,0,0,.2);
     }
-
-    /* ---- Base & Reset ---- */
     * { box-sizing: border-box; }
     html, body { height: 100%; }
-    body {
-      margin: 0;
-      font-family: var(--font-sans);
-      color: var(--text-secondary);
-      background-color: var(--bg);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
+    body { margin: 0; font-family: var(--font-sans); color: var(--text-secondary); background: var(--bg); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    .d-none { display: none !important; }
 
-    /* ---- Layout ---- */
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: var(--space-xl);
-      display: grid;
-      grid-template-columns: 350px 1fr;
-      gap: var(--space-xl);
-      align-items: start;
-    }
-    @media (max-width: 1024px) {
-      .container {
-        grid-template-columns: 1fr;
-      }
-    }
-    .inputs-panel {
-      position: sticky;
-      top: var(--space-xl);
-    }
-    @media (max-width: 1024px) {
-      .inputs-panel {
-        position: static;
-        top: auto;
-      }
-    }
+    .container { max-width: 1200px; margin: 0 auto; padding: var(--space-xl);
+      display: grid; grid-template-columns: 350px 1fr; gap: var(--space-xl); align-items: start; }
+    @media (max-width:1024px){ .container{ grid-template-columns: 1fr; } }
 
-    /* ---- Typography ---- */
+    .inputs-panel { position: sticky; top: var(--space-xl); }
+    @media (max-width:1024px){ .inputs-panel { position: static; } }
+
     h1 { font-size: 24px; color: var(--text-primary); margin: 0 0 var(--space-md); font-weight: 700; }
-    h2 { font-size: 18px; color: var(--text-primary); margin: 0 0 var(--space-lg); font-weight: 500; }
-    .eyebrow { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    h2 { font-size: 18px; color: var(--text-primary); margin: 0 0 var(--space-lg); font-weight: 600; }
+    .eyebrow { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing:.5px; }
     .big-value { font-size: 28px; color: var(--text-primary); font-weight: 700; }
     .help-text { font-size: 13px; color: var(--text-muted); }
 
-    /* ---- Components ---- */
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: var(--space-lg);
-      box-shadow: var(--shadow);
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: var(--space-md);
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-xs);
-    }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-lg); box-shadow: var(--shadow); }
+    .panel-lite { background: linear-gradient(180deg, rgba(56,189,248,.06), rgba(56,189,248,.02)); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-lg); }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-md); display: flex; flex-direction: column; gap: var(--space-xs); }
+    .chip { display: inline-flex; align-items:center; gap:6px; font-size:12px; padding:6px 8px; border-radius:999px; background: rgba(148,163,184,.12); color: var(--text-secondary); border: 1px solid var(--border); }
+    .badge { display:inline-block; font-size:11px; text-transform:uppercase; letter-spacing:.4px; color:#dbeafe; background: rgba(56,189,248,.15);
+      border:1px solid rgba(56,189,248,.35); border-radius:999px; padding:4px 8px; }
+    .badge-invest { background: rgba(34,197,94,.15); border-color: rgba(34,197,94,.35); color:#bbf7d0; }
+    .badge-overpay { background: rgba(59,130,246,.15); border-color: rgba(59,130,246,.35); color:#dbeafe; }
+    .badge-neutral { background: rgba(168,162,158,.15); border-color: rgba(168,162,158,.35); color:#e7e5e4; }
 
-    /* ---- Form Elements ---- */
     .form-group { margin-bottom: var(--space-lg); }
-    label, .label { font-size: 14px; color: var(--text-secondary); font-weight: 500; margin-bottom: var(--space-sm); display: block; }
-    input[type="number"], input[type="text"] {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text-primary);
-      font-family: var(--font-sans);
-      font-size: 16px;
-      outline: none;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-    input[type="number"]:focus, input[type="text"]:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 20%, transparent);
-    }
-    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); }
+    label { font-size: 14px; color: var(--text-secondary); font-weight: 600; margin-bottom: var(--space-sm); display:block; }
+    input[type="number"], input[type="text"] { width:100%; padding:12px; border-radius:8px; border:1px solid var(--border); background:#0b1220; color:var(--text-primary);
+      font-family: var(--font-sans); font-size:16px; outline:none; transition: border-color .2s, box-shadow .2s; }
+    input[type="number"]:focus, input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 20%, transparent); }
+    .input-row { display:grid; grid-template-columns:1fr 1fr; gap:var(--space-md); }
+    @media (max-width:520px){ .input-row{ grid-template-columns:1fr; } }
 
-    /* Segmented Toggle */
-    .toggle-group {
-      display: flex;
-      background: var(--bg);
-      padding: var(--space-xs);
-      border-radius: 999px;
-      border: 1px solid var(--border);
-    }
-    .toggle-group input { display: none; }
-    .toggle-group label {
-      flex: 1;
-      text-align: center;
-      padding: var(--space-sm) var(--space-md);
-      border-radius: 999px;
-      cursor: pointer;
-      user-select: none;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-secondary);
-      margin: 0;
-      transition: all 0.2s ease;
-    }
-    .toggle-group input:checked + label {
-      background: var(--accent);
-      color: var(--bg);
-      box-shadow: 0 2px 10px color-mix(in oklab, var(--accent) 25%, transparent);
-    }
+    .toggle-group { display:flex; background:#0b1220; padding:var(--space-xs); border-radius:999px; border:1px solid var(--border); }
+    .toggle-group input { display:none; }
+    .toggle-group label { flex:1; text-align:center; padding: var(--space-sm) var(--space-md); border-radius:999px; cursor:pointer; user-select:none; font-size:14px; font-weight:600;
+      color:var(--text-secondary); margin:0; transition:all .2s; }
+    .toggle-group input:checked + label { background: var(--accent); color: var(--bg); box-shadow: 0 2px 10px color-mix(in oklab, var(--accent) 25%, transparent); }
 
-    /* Range Slider */
-    .range-group .value {
-      font-variant-numeric: tabular-nums;
-      color: var(--text-primary);
-      font-size: 16px;
-      font-weight: 500;
-    }
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--accent);
-      margin-top: var(--space-sm);
-    }
+    .range-group .value { font-variant-numeric: tabular-nums; color: var(--text-primary); font-size: 16px; font-weight: 600; }
+    input[type="range"] { width:100%; accent-color: var(--accent); margin-top: var(--space-sm); }
 
-    /* ---- Results & Charts ---- */
-    .results-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: var(--space-md);
-    }
-    @media (max-width: 768px) {
-      .results-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-    @media (max-width: 500px) {
-      .results-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-    .chart-container {
-      margin-top: var(--space-xl);
-    }
-    .chart-placeholder {
-      width: 100%;
-      height: 300px;
-      background: var(--bg);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-    }
+    .results-grid { display:grid; grid-template-columns: repeat(3,1fr); gap: var(--space-md); }
+    @media (max-width:900px){ .results-grid{ grid-template-columns:1fr 1fr; } }
+    @media (max-width:560px){ .results-grid{ grid-template-columns:1fr; } }
+
+    .chart-container { margin-top: var(--space-xl); }
+    .chart-placeholder { width:100%; height:360px; background:#0b1220; border-radius: var(--radius); border:1px solid var(--border); padding: var(--space-sm); }
+
+    .rec-title { font-size:18px; color: var(--text-primary); margin-top: var(--space-sm); font-weight: 700; }
+    .rec-list { margin: var(--space-sm) 0 0; padding-left: 18px; }
+    .rec-list li { margin:4px 0; }
+
+    .alert { border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; background:#3b1f24; color:#ffd7dc; margin-bottom: var(--space-lg); }
+    .alert .muted { color:#ffd7dc; opacity:.85; font-size:13px; }
+
+    button:hover { background: var(--border) !important; transform: translateY(-1px); transition: all .2s; }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Left Column: Inputs -->
+    <!-- Left: Inputs -->
     <aside class="inputs-panel">
       <div class="panel">
         <h1>Loan Visualiser</h1>
-        
+
         <div class="form-group">
           <label for="loanType-mortgage">Loan Type</label>
           <div class="toggle-group">
@@ -222,93 +104,133 @@
 
         <form autocomplete="off">
           <div class="form-group">
+            <div style="display:flex; gap:8px; margin-bottom:16px;">
+              <button type="button" id="preset-mortgage" style="flex:1; padding:8px; border:1px solid var(--border); background:var(--card); color:var(--text-secondary); border-radius:var(--radius); cursor:pointer; font-size:12px;">Mortgage Example</button>
+              <button type="button" id="preset-personal" style="flex:1; padding:8px; border:1px solid var(--border); background:var(--card); color:var(--text-secondary); border-radius:var(--radius); cursor:pointer; font-size:12px;">Personal Loan</button>
+            </div>
+          </div>
+
+          <div class="form-group">
             <label for="outstandingBalance">Outstanding Balance (£)</label>
-            <input id="outstandingBalance" name="outstandingBalance" type="number" placeholder="250000" />
+            <input id="outstandingBalance" name="outstandingBalance" type="number" placeholder="250000" min="1" inputmode="decimal" />
           </div>
 
           <div class="input-row form-group">
             <div>
               <label for="remainingTermMonths">Term (Months)</label>
-              <input id="remainingTermMonths" name="remainingTermMonths" type="number" placeholder="300" />
+              <input id="remainingTermMonths" name="remainingTermMonths" type="number" placeholder="300" min="1" inputmode="numeric" />
             </div>
             <div>
               <label for="interestApr">Interest (APR %)</label>
-              <input id="interestApr" name="interestApr" type="number" placeholder="4.25" step="0.01" />
+              <input id="interestApr" name="interestApr" type="number" placeholder="4.25" step="0.01" min="0" inputmode="decimal" />
             </div>
           </div>
 
           <div class="form-group range-group">
-            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
               <label for="overpayMonthly">Monthly Overpayment (£)</label>
-              <span class="value" id="overpayValue">£0</span>
+              <span class="value" id="overpayValue" aria-live="polite">£0</span>
             </div>
-            <input id="overpayMonthly" name="overpayMonthly" type="range" min="0" max="1000" step="10" value="0" />
+            <input id="overpayMonthly" name="overpayMonthly" type="range" min="0" max="5000" step="50" value="0" />
           </div>
 
           <div class="form-group range-group">
-            <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <label for="expectedReturn">Investment Return (%)</label>
-                <span class="value" id="expectedReturnValue">4.0%</span>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <label for="expectedReturn">Investment Return (%)</label>
+              <span class="value" id="expectedReturnValue" aria-live="polite">4.0%</span>
             </div>
             <input id="expectedReturn" name="expectedReturn" type="range" min="0" max="15" step="0.1" value="4.0" />
-            <p class="help-text" style="margin-top: var(--space-sm);">Expected annual return if you invested the overpayment amount instead.</p>
+            <p class="help-text" style="margin-top: 8px;">If you invested the overpayment monthly, this is the assumed annual return.</p>
           </div>
         </form>
       </div>
     </aside>
 
-    <!-- Right Column: Results & Charts -->
+    <!-- Right: Results & Charts -->
     <main class="results-panel">
+      <div id="errorBanner" class="alert d-none" role="alert" aria-live="assertive">
+        <strong>Check your inputs</strong>
+        <div id="errorText" class="muted">—</div>
+      </div>
+
       <div class="panel">
         <h2>Results Summary</h2>
         <div class="results-grid">
           <div class="card">
             <span class="eyebrow">New Payoff Date</span>
             <span class="big-value" id="result-payoffDate">—</span>
+            <span class="chip" id="chip-originalPayoff">Original: —</span>
           </div>
           <div class="card">
             <span class="eyebrow">Interest Saved</span>
             <span class="big-value" id="result-interestSaved">—</span>
+            <span class="chip">Total Interest (with overpay): <span id="result-totalInterest">—</span></span>
           </div>
           <div class="card">
             <span class="eyebrow">Term Reduced By</span>
             <span class="big-value" id="result-monthsSaved">—</span>
+            <span class="chip">New monthly outflow: <span id="chip-monthlyOutflow">—</span></span>
           </div>
           <div class="card">
-            <span class="eyebrow">Total Interest Paid</span>
-            <span class="big-value" id="result-totalInterest">—</span>
-          </div>
-          <div class="card">
-            <span class="eyebrow">Invested Value</span>
+            <span class="eyebrow">Invested Value (by original date)</span>
             <span class="big-value" id="result-fvInvest">—</span>
+            <span class="chip">Expected return: <span id="chip-expectedReturn">—</span></span>
           </div>
           <div class="card">
             <span class="eyebrow">Invest vs Overpay</span>
             <span class="big-value" id="result-deltaSimple">—</span>
+            <span class="chip" id="chip-crossover">Crossover: —</span>
+          </div>
+          <div class="card">
+            <span class="eyebrow">Assumptions</span>
+            <span class="chip">No fees modelled</span>
+            <span class="chip">Constant APR</span>
+            <span class="chip">End-of-month contributions</span>
           </div>
         </div>
       </div>
 
+      <div class="panel-lite" id="recommendPanel" style="margin-top: 16px;">
+        <span class="badge" id="recommendBadge">Recommendation</span>
+        <div class="rec-title" id="recommendTitle">—</div>
+        <ul class="rec-list" id="recommendReasons"></ul>
+        <div class="help-text" id="recommendFoot">Educational only, not financial advice.</div>
+        <div class="help-text">We recommend <span id="recommendedRate">4.0%</span> as a baseline expected return.</div>
+        <div class="help-text">Engine status: <span id="statusText">loading...</span></div>
+      </div>
+
       <div class="panel chart-container">
         <h2>Loan Balance Over Time</h2>
-        <div class="chart-placeholder">
-          <canvas id="balanceChart"></canvas>
-        </div>
+        <div class="chart-placeholder"><canvas id="balanceChart"></canvas></div>
       </div>
-      
+
       <div class="panel chart-container">
-        <h2>Investment vs. Overpayment</h2>
-        <div class="chart-placeholder">
-          <canvas id="oppBarChart"></canvas>
-        </div>
+        <h2>Interest Comparison</h2>
+        <div class="chart-placeholder"><canvas id="interestBarChart"></canvas></div>
+      </div>
+
+      <div class="panel chart-container">
+        <h2>Overpay vs Invest — Wealth Over Time</h2>
+        <div class="chart-placeholder"><canvas id="oppLineChart"></canvas></div>
+      </div>
+
+      <div class="panel chart-container">
+        <h2>Delta Analysis (Δt)</h2>
+        <div class="chart-placeholder" style="height: 200px;"><canvas id="deltaChart"></canvas></div>
+      </div>
+
+      <div class="panel chart-container">
+        <h2>Final Wealth Comparison (at Original Term)</h2>
+        <div class="chart-placeholder"><canvas id="oppBarChart"></canvas></div>
       </div>
     </main>
   </div>
 
-  <!-- Chart.js Library -->
+  <!-- Chart.js + Annotation plugin (order matters) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  
-  <!-- Your main.js file (assuming it exists and handles the logic) -->
-  <script type="module" src="./main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.umd.min.js"></script>
+
+  <!-- App logic -->
+  <script type="module" src="main.js"></script>
 </body>
 </html>
