@@ -3,284 +3,312 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>UK Loan Visualiser — MVP Shell</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <title>UK Loan Visualiser — A Decision-Making Tool</title>
+
+  <!-- Google Fonts: Manrope -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+
   <style>
+    /*
+    --- DESIGN PHILOSOPHY ---
+    Theme: "Clarity & Confidence"
+    The UI is designed to feel like a trustworthy, high-end financial dashboard.
+    It's clean, spacious, and uses a consistent design system to empower users
+    to make informed decisions without distraction.
+
+    - Typography: Manrope for a modern, professional, and highly legible feel.
+    - Layout: A sticky sidebar for inputs and a main content area for results,
+      creating a common and intuitive dashboard pattern.
+    - Spacing: A consistent 8px-based scale for all margins, padding, and gaps.
+    - Components: All elements share a consistent border-radius, color palette,
+      and interaction style.
+    */
+
+    /* ---- Design Tokens ---- */
     :root {
-      --bg: #0b0c0e;
-      --panel: #14161a;
-      --muted: #6b7280;
-      --text: #e5e7eb;
-      --accent: #60a5fa;
-      --border: #23262b;
-      --card: #111315;
-      --radius: 14px;
-      --gap: 14px;
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --card: #1e293b;
+      --border: #334155;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent: #38bdf8;
+      --accent-dark: #0ea5e9;
+
+      --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+
+      --radius: 12px;
+      --shadow: 0 10px 30px rgba(0,0,0,.2);
     }
+
+    /* ---- Base & Reset ---- */
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
-      margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      color: var(--text); background: radial-gradient(1200px 800px at 80% -10%, #1a2230 0%, #0b0c0e 60%) no-repeat, var(--bg);
+      margin: 0;
+      font-family: var(--font-sans);
+      color: var(--text-secondary);
+      background-color: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
-    .container { max-width: 1100px; margin: 0 auto; padding: 24px 18px 56px; }
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-    h1 { font-size: 20px; margin: 0; letter-spacing: 0.3px; }
-    .grid {
-      display: grid; grid-template-columns: 1.1fr 1fr; gap: 18px;
+
+    /* ---- Layout ---- */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--space-xl);
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: var(--space-xl);
+      align-items: start;
     }
-    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+    @media (max-width: 1024px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+    .inputs-panel {
+      position: sticky;
+      top: var(--space-xl);
+    }
+    @media (max-width: 1024px) {
+      .inputs-panel {
+        position: static;
+        top: auto;
+      }
+    }
+
+    /* ---- Typography ---- */
+    h1 { font-size: 24px; color: var(--text-primary); margin: 0 0 var(--space-md); font-weight: 700; }
+    h2 { font-size: 18px; color: var(--text-primary); margin: 0 0 var(--space-lg); font-weight: 500; }
+    .eyebrow { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .big-value { font-size: 28px; color: var(--text-primary); font-weight: 700; }
+    .help-text { font-size: 13px; color: var(--text-muted); }
+
+    /* ---- Components ---- */
     .panel {
-      background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px;
-      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: var(--space-lg);
+      box-shadow: var(--shadow);
     }
-    .panel h2 { margin: 0 0 12px; font-size: 16px; color: #cbd5e1; }
-    .muted { color: var(--muted); font-size: 13px; }
-
-    /* Form */
-    form { display: grid; gap: 14px; }
-    .field { display: grid; gap: 6px; }
-    .row { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
-    @media (max-width: 620px) { .row { grid-template-columns: 1fr; } }
-    label { font-size: 13px; color: #cbd5e1; }
-    input[type="number"], input[type="text"], select {
-      appearance: none;
-      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
-      background: #0f1114; color: var(--text); outline: none;
-    }
-    input::placeholder { color: #616875; }
-    .help { font-size: 12px; color: var(--muted); }
-
-    /* Segmented toggle */
-    .seg {
-      display: inline-grid; grid-auto-flow: column; gap: 8px; background: #0f1114; padding: 6px; border-radius: 999px; border: 1px solid var(--border);
-      width: max-content;
-    }
-    .seg input { display: none; }
-    .seg label {
-      padding: 8px 12px; border-radius: 999px; cursor: pointer; user-select: none; font-size: 13px; color: #cbd5e1;
-      border: 1px solid transparent;
-    }
-    .seg input:checked + label {
-      background: linear-gradient(180deg, #1a2430, #131820);
-      border-color: #273041;
-      color: #e8eef9;
-      box-shadow: inset 0 0 0 1px rgba(96,165,250,.2);
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: var(--space-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
     }
 
-    /* Range slider */
-    .range { display: grid; gap: 6px; }
+    /* ---- Form Elements ---- */
+    .form-group { margin-bottom: var(--space-lg); }
+    label, .label { font-size: 14px; color: var(--text-secondary); font-weight: 500; margin-bottom: var(--space-sm); display: block; }
+    input[type="number"], input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    input[type="number"]:focus, input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 20%, transparent);
+    }
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); }
+
+    /* Segmented Toggle */
+    .toggle-group {
+      display: flex;
+      background: var(--bg);
+      padding: var(--space-xs);
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+    .toggle-group input { display: none; }
+    .toggle-group label {
+      flex: 1;
+      text-align: center;
+      padding: var(--space-sm) var(--space-md);
+      border-radius: 999px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin: 0;
+      transition: all 0.2s ease;
+    }
+    .toggle-group input:checked + label {
+      background: var(--accent);
+      color: var(--bg);
+      box-shadow: 0 2px 10px color-mix(in oklab, var(--accent) 25%, transparent);
+    }
+
+    /* Range Slider */
+    .range-group .value {
+      font-variant-numeric: tabular-nums;
+      color: var(--text-primary);
+      font-size: 16px;
+      font-weight: 500;
+    }
     input[type="range"] {
       width: 100%;
       accent-color: var(--accent);
-    }
-    .range-head { display: flex; justify-content: space-between; align-items: baseline; }
-    .range .value {
-      font-variant-numeric: tabular-nums;
-      color: #d1e0ff; font-size: 14px;
+      margin-top: var(--space-sm);
     }
 
-    /* Results placeholders */
-    .results {
-      display: grid; gap: 12px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    @media (max-width: 620px) { .results { grid-template-columns: 1fr; } }
-    .card {
-      background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px;
-      min-height: 88px; display: grid; align-content: start; gap: 8px;
-    }
-    .eyebrow { font-size: 12px; color: var(--muted); letter-spacing: .3px; text-transform: uppercase; }
-    .big { font-size: 22px; letter-spacing: .2px; }
-    .dash { color: #7a8291; }
-
-    /* Placeholder chart block */
-    .chart {
-      background: #0f1114; border: 1px dashed #2a2f37; border-radius: 12px; height: 220px;
-      display: grid; place-items: center; color: #8b95a7; font-size: 13px;
-    }
-
-    .banner {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px 14px;
-      margin: 12px 0 18px;
+    /* ---- Results & Charts ---- */
+    .results-grid {
       display: grid;
-      gap: 6px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-md);
     }
-    .banner.error {
-      background: #1b1112;      /* subtle red-ish on your dark theme */
-      border-color: #3a1719;
-      color: #f8d7da;
+    @media (max-width: 768px) {
+      .results-grid {
+        grid-template-columns: 1fr 1fr;
+      }
     }
-    .hidden { display: none !important; }
+    @media (max-width: 500px) {
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .chart-container {
+      margin-top: var(--space-xl);
+    }
+    .chart-placeholder {
+      width: 100%;
+      height: 300px;
+      background: var(--bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
   </style>
 </head>
-<body data-bs-theme="dark">
+<body>
   <div class="container">
-    <header>
-      <h1>UK Loan Visualiser</h1>
-      <div aria-live="polite" class="muted">Commit 3: Now with live calculations! Engine connected.</div>
-    </header>
-
-    <div id="statusPill" class="muted" style="font-size:12px;margin:6px 0 12px;">
-      Engine: <span id="statusText">loading…</span>
-    </div>
-
-    <div id="errorBanner" class="alert alert-danger d-none" role="alert" aria-live="assertive">
-      <strong>Check your inputs</strong>
-      <div id="errorText" class="small opacity-75">—</div>
-    </div>
-
-    <main class="grid" role="main">
-      <!-- Left: Inputs -->
-      <section class="panel sticky-top" style="top: 16px;" aria-label="Loan Inputs">
-        <h2>Loan inputs</h2>
-
-        <!-- Loan type toggle (segmented) -->
-        <fieldset aria-label="Loan Type">
-          <legend class="muted">Loan type</legend>
-          <div class="seg" role="tablist" aria-label="Loan Type Toggle">
+    <!-- Left Column: Inputs -->
+    <aside class="inputs-panel">
+      <div class="panel">
+        <h1>Loan Visualiser</h1>
+        
+        <div class="form-group">
+          <label for="loanType-mortgage">Loan Type</label>
+          <div class="toggle-group">
             <input id="loanType-mortgage" name="loanType" type="radio" value="mortgage" checked />
-            <label for="loanType-mortgage" role="tab" aria-selected="true">Mortgage</label>
-
+            <label for="loanType-mortgage">Mortgage</label>
             <input id="loanType-personal" name="loanType" type="radio" value="personal" />
-            <label for="loanType-personal" role="tab" aria-selected="false">Personal Loan</label>
+            <label for="loanType-personal">Personal Loan</label>
           </div>
-          
-          <div class="mt-2 d-flex flex-wrap gap-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="preset-mortgage">Typical Mortgage</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="preset-personal">Typical Personal Loan</button>
-          </div>
-        </fieldset>
+        </div>
 
-        <form aria-describedby="formHelp" autocomplete="off">
-          <p id="formHelp" class="help">These fields describe your <em>existing</em> loan. Calculations update live as you type.</p>
-
-          <div class="field mb-3">
-            <label for="outstandingBalance" class="form-label">Outstanding Balance (£)</label>
-            <input id="outstandingBalance" name="outstandingBalance" min="1" type="number" inputmode="decimal" placeholder="250000" class="form-control" aria-describedby="outstandingHelp" />
-            <div id="outstandingHelp" class="form-text">Remaining principal today (e.g., 250000).</div>
+        <form autocomplete="off">
+          <div class="form-group">
+            <label for="outstandingBalance">Outstanding Balance (£)</label>
+            <input id="outstandingBalance" name="outstandingBalance" type="number" placeholder="250000" />
           </div>
 
-          <div class="row">
-            <div class="field mb-3">
-              <label for="remainingTermMonths" class="form-label">Remaining Term (months)</label>
-              <input id="remainingTermMonths" name="remainingTermMonths" min="1" type="number" inputmode="numeric" placeholder="300" class="form-control" aria-describedby="termHelp" />
-              <div id="termHelp" class="form-text">Months left on the loan (e.g., 300 = 25 years).</div>
+          <div class="input-row form-group">
+            <div>
+              <label for="remainingTermMonths">Term (Months)</label>
+              <input id="remainingTermMonths" name="remainingTermMonths" type="number" placeholder="300" />
             </div>
-
-            <div class="field mb-3">
-              <label for="interestApr" class="form-label">Interest Rate (APR %)</label>
-              <input id="interestApr" name="interestApr" type="number" inputmode="decimal" placeholder="4.25" min="0" step="0.01" class="form-control" aria-describedby="aprHelp" />
-              <div id="aprHelp" class="form-text">Annual Percentage Rate (e.g., 4.25).</div>
+            <div>
+              <label for="interestApr">Interest (APR %)</label>
+              <input id="interestApr" name="interestApr" type="number" placeholder="4.25" step="0.01" />
             </div>
           </div>
 
-          <div class="field range mb-3">
-            <div class="d-flex justify-content-between align-items-baseline">
-              <label for="overpayMonthly" class="form-label mb-1">Monthly Overpayment (£)</label>
-              <span class="value" id="overpayValue" aria-live="polite">£0</span>
+          <div class="form-group range-group">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <label for="overpayMonthly">Monthly Overpayment (£)</label>
+              <span class="value" id="overpayValue">£0</span>
             </div>
-            <input id="overpayMonthly" name="overpayMonthly" type="range" min="0" max="5000" step="50" value="0" class="form-range" />
-            <div class="form-text">Adjust how much extra you might pay each month.</div>
+            <input id="overpayMonthly" name="overpayMonthly" type="range" min="0" max="1000" step="10" value="0" />
           </div>
 
-          <div class="field range mb-2">
-            <div class="d-flex justify-content-between align-items-baseline">
-              <label for="expectedReturn" class="form-label mb-1">Expected Annual Return (%)</label>
-              <span class="value" id="expectedReturnValue" aria-live="polite">4.0%</span>
+          <div class="form-group range-group">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <label for="expectedReturn">Investment Return (%)</label>
+                <span class="value" id="expectedReturnValue">4.0%</span>
             </div>
-            <input id="expectedReturn" name="expectedReturn" type="range" min="0" max="15" step="0.1" value="4.0" class="form-range" />
-            <div class="form-text">
-              Recommended (deposit / risk-free proxy): <span id="recommendedRate">4.0%</span>
-            </div>
+            <input id="expectedReturn" name="expectedReturn" type="range" min="0" max="15" step="0.1" value="4.0" />
+            <p class="help-text" style="margin-top: var(--space-sm);">Expected annual return if you invested the overpayment amount instead.</p>
           </div>
         </form>
-      </section>
+      </div>
+    </aside>
 
-      <!-- Right: Results, Charts, and Compare -->
-      <section class="panel" aria-label="Results">
-        <h2>Results</h2>
-
-        <div class="results" aria-live="polite">
+    <!-- Right Column: Results & Charts -->
+    <main class="results-panel">
+      <div class="panel">
+        <h2>Results Summary</h2>
+        <div class="results-grid">
           <div class="card">
-            <div class="eyebrow">Projected Payoff Date</div>
-            <div class="big dash" id="result-payoffDate">—</div>
-            <div class="help">When the loan would finish with the chosen overpayment.</div>
+            <span class="eyebrow">New Payoff Date</span>
+            <span class="big-value" id="result-payoffDate">—</span>
           </div>
-
           <div class="card">
-            <div class="eyebrow">Interest Saved vs No Overpayment</div>
-            <div class="big dash" id="result-interestSaved">—</div>
-            <div class="help">Total £ saved in interest compared to baseline.</div>
+            <span class="eyebrow">Interest Saved</span>
+            <span class="big-value" id="result-interestSaved">—</span>
           </div>
-
           <div class="card">
-            <div class="eyebrow">Total Interest (with Overpayment)</div>
-            <div class="big dash" id="result-totalInterest">—</div>
-            <div class="help">Cumulative interest paid under the current inputs.</div>
+            <span class="eyebrow">Term Reduced By</span>
+            <span class="big-value" id="result-monthsSaved">—</span>
           </div>
-
           <div class="card">
-            <div class="eyebrow">Months Saved</div>
-            <div class="big dash" id="result-monthsSaved">—</div>
-            <div class="help">How many months earlier you finish vs baseline.</div>
+            <span class="eyebrow">Total Interest Paid</span>
+            <span class="big-value" id="result-totalInterest">—</span>
           </div>
-
           <div class="card">
-            <div class="eyebrow">If Invested Instead (by original payoff date)</div>
-            <div class="big dash" id="result-fvInvest">—</div>
-            <div class="help">Value if you invested the monthly overpayment until the original payoff date.</div>
+            <span class="eyebrow">Invested Value</span>
+            <span class="big-value" id="result-fvInvest">—</span>
           </div>
-
           <div class="card">
-            <div class="eyebrow">Δ Invest − Overpay (simple)</div>
-            <div class="big dash" id="result-deltaSimple">—</div>
-            <div class="help">Positive means investing beats overpaying (simple horizon).</div>
+            <span class="eyebrow">Invest vs Overpay</span>
+            <span class="big-value" id="result-deltaSimple">—</span>
           </div>
         </div>
+      </div>
 
-        <!-- Keeping charts nested so they remain in the right column without grid refactor -->
-        <div class="panel" aria-label="Loan Analysis" style="margin-top:18px">
-          <h2>Loan Balance & Interest</h2>
-          <div class="chart" role="img" aria-label="Balance over time">
-            <div class="ratio ratio-16x9 w-100">
-              <canvas id="balanceChart"></canvas>
-            </div>
-          </div>
-          <div class="chart" role="img" aria-label="Monthly interest comparison" style="margin-top:12px">
-            <div class="ratio ratio-21x9 w-100">
-              <canvas id="interestBarChart"></canvas>
-            </div>
-          </div>
+      <div class="panel chart-container">
+        <h2>Loan Balance Over Time</h2>
+        <div class="chart-placeholder">
+          <canvas id="balanceChart"></canvas>
         </div>
-
-        <div class="panel" aria-label="Investment Analysis" style="margin-top:18px">
-          <h2>Investment vs Overpayment Analysis</h2>
-          <div class="chart" role="img" aria-label="Cumulative returns over time">
-            <div class="ratio ratio-16x9 w-100">
-              <canvas id="oppLineChart"></canvas>
-            </div>
-          </div>
-          <div class="chart" role="img" aria-label="Final value comparison" style="margin-top:12px">
-            <div class="ratio ratio-21x9 w-100">
-              <canvas id="oppBarChart"></canvas>
-            </div>
-          </div>
+      </div>
+      
+      <div class="panel chart-container">
+        <h2>Investment vs. Overpayment</h2>
+        <div class="chart-placeholder">
+          <canvas id="oppBarChart"></canvas>
         </div>
-      </section>
+      </div>
     </main>
-
-    <footer class="muted" style="margin-top:18px">
-      v0.6 — Investment analysis! Compare overpaying vs investing with expected return calculations.
-    </footer>
   </div>
 
-  <!-- libs first, then app -->
+  <!-- Chart.js Library -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Your main.js file (assuming it exists and handles the logic) -->
   <script type="module" src="./main.js"></script>
 </body>
 </html>
