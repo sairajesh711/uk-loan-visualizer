@@ -149,7 +149,7 @@
         </fieldset>
 
         <form aria-describedby="formHelp" autocomplete="off">
-          <p id="formHelp" class="help">These fields describe your <em>existing</em> loan. We’ll add calculations next commit.</p>
+          <p id="formHelp" class="help">These fields describe your <em>existing</em> loan. Calculations update live as you type.</p>
 
           <div class="field">
             <label for="outstandingBalance">Outstanding Balance (£)</label>
@@ -174,16 +174,16 @@
           <div class="field range">
             <div class="range-head">
               <label for="overpayMonthly">Monthly Overpayment (£)</label>
-              <span class="value" aria-live="polite">£0</span>
+              <span class="value" id="overpayValue" aria-live="polite">£0</span>
             </div>
             <input id="overpayMonthly" name="overpayMonthly" type="range" min="0" max="5000" step="50" value="0" />
-            <div class="help">Adjust how much extra you might pay each month. (Display value updates in a later commit.)</div>
+            <div class="help">Adjust how much extra you might pay each month.</div>
           </div>
 
           <div class="field range">
             <div class="range-head">
               <label for="expectedReturn">Expected Annual Return (%)</label>
-              <span class="value" id="expectedReturnValue">4.0%</span>
+              <span class="value" id="expectedReturnValue" aria-live="polite">4.0%</span>
             </div>
             <input id="expectedReturn" name="expectedReturn" type="range" min="0" max="15" step="0.1" value="4.0" />
             <div class="help">
@@ -193,7 +193,7 @@
         </form>
       </section>
 
-      <!-- Right: Results placeholders -->
+      <!-- Right: Results, Charts, and Compare -->
       <section class="panel" aria-label="Results">
         <h2>Results</h2>
 
@@ -233,21 +233,26 @@
             <div class="big dash" id="result-deltaSimple">—</div>
             <div class="help">Positive means investing beats overpaying (simple horizon).</div>
           </div>
-
-          <div class="card">
-            <div class="eyebrow">Break-even Return (annual)</div>
-            <div class="big dash" id="result-breakEven">—</div>
-            <div class="help">Annual return needed for investing to match overpay's interest saved.</div>
-          </div>
         </div>
 
-        <div class="panel" aria-label="Visualisations" style="margin-top:18px">
-          <h2>Visualisations</h2>
+        <!-- Keeping charts nested so they remain in the right column without grid refactor -->
+        <div class="panel" aria-label="Loan Analysis" style="margin-top:18px">
+          <h2>Loan Balance & Interest</h2>
           <div class="chart" role="img" aria-label="Balance over time">
             <canvas id="balanceChart" height="220"></canvas>
           </div>
-          <div class="chart" role="img" aria-label="Total interest comparison" style="margin-top:12px">
+          <div class="chart" role="img" aria-label="Monthly interest comparison" style="margin-top:12px">
             <canvas id="interestBarChart" height="180"></canvas>
+          </div>
+        </div>
+
+        <div class="panel" aria-label="Investment Analysis" style="margin-top:18px">
+          <h2>Investment vs Overpayment Analysis</h2>
+          <div class="chart" role="img" aria-label="Cumulative returns over time">
+            <canvas id="oppLineChart" height="220"></canvas>
+          </div>
+          <div class="chart" role="img" aria-label="Final value comparison" style="margin-top:12px">
+            <canvas id="oppBarChart" height="180"></canvas>
           </div>
         </div>
       </section>
@@ -257,8 +262,10 @@
       v0.6 — Investment analysis! Compare overpaying vs investing with expected return calculations.
     </footer>
   </div>
+
+  <!-- libs first, then app -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.umd.min.js"></script>
+  <script type="module" src="./main.js"></script>
 </body>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.umd.min.js"></script>
-<script type="module" src="./main.js"></script>
 </html>
