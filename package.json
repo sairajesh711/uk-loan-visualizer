@@ -1,14 +1,32 @@
 {
   "name": "uk-loan-visualizer",
   "version": "1.0.0",
-  "description": "UK Loan vs Investment Decision Tool",
+  "description": "UK Loan vs Investment Decision Tool - Compare overpaying your loan vs investing the money",
   "type": "module",
-  "main": "apps/web/main.js",
+  "main": "main.js",
   "scripts": {
-    "start": "npx serve apps/web -l 3000",
-    "dev": "npx serve apps/web -l 3000"
+    "start": "npx serve . -l 3000",
+    "dev": "npx serve . -l 3000"
   },
-  "keywords": ["loan", "investment", "finance", "uk", "calculator"],
-  "author": "Your Name",
-  "license": "MIT"
+  "homepage": "https://sairajesh711.github.io/uk-loan-visualizer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sairajesh711/uk-loan-visualizer.git"
+  },
+  "keywords": [
+    "loan",
+    "investment", 
+    "finance",
+    "uk",
+    "calculator",
+    "mortgage",
+    "overpayment",
+    "wealth",
+    "comparison"
+  ],
+  "author": "sairajesh711",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sairajesh711/uk-loan-visualizer/issues"
+  }
 }

@@ -2,8 +2,16 @@
 
 A financial decision tool that helps you compare **overpaying your loan** vs **investing the money** using apples-to-apples wealth comparison.
 
-## 🚀 Quick Start
+## 🌐 Live Demo
 
+**� [Try it now on GitHub Pages](https://sairajesh711.github.io/uk-loan-visualizer/)**
+
+## �🚀 Quick Start
+
+### Option 1: Use Online
+Visit the live demo link above - no installation required!
+
+### Option 2: Run Locally
 ```bash
 # Clone the repository
 git clone https://github.com/sairajesh711/uk-loan-visualizer.git
@@ -22,19 +30,21 @@ The app will be available at **http://localhost:3000**
 - **Break-Even Analysis**: Calculates the exact return rate where strategies break even
 - **Interactive Visualizations**: Real-time charts showing balance reduction and wealth comparison
 - **Decision Support**: Clear recommendations based on financial outcomes
+- **Mobile Responsive**: Works perfectly on all devices
 
 ## 🏗️ Architecture
 
-This is now a **simple standalone implementation**:
+This is a **simple standalone implementation** perfect for GitHub Pages:
 
 ```
 uk-loan-visualizer/
-├── apps/web/
-│   ├── index.html      # Main UI with Bootstrap styling
-│   ├── main.js         # UI logic and chart rendering
-│   └── engine.js       # Financial calculation engine (ES module)
-├── package.json        # Simple project config
-└── README.md
+├── index.html          # Main UI with modern dark theme
+├── main.js            # UI logic and chart rendering
+├── engine.js          # Financial calculation engine (ES module)
+├── package.json       # Project configuration
+└── .github/
+    └── workflows/
+        └── deploy.yml # Automatic GitHub Pages deployment
 ```
 
 ## 📊 How It Works
@@ -44,23 +54,22 @@ uk-loan-visualizer/
 3. **Break-Even Calculation**: Uses bisection search to find the return rate where outcomes are equal
 4. **Visual Analysis**: Interactive Chart.js visualizations with crossover markers
 
-## 🔧 Development
-
-The project uses vanilla JavaScript with ES modules:
+## 🔧 Technology Stack
 
 - **No build step required** - just serve the files
 - **No dependencies** - uses CDN for Chart.js and Bootstrap
-- **Module imports** - clean separation between engine and UI
-- **TypeScript-style JSDoc** - for better code documentation
+- **ES6 Modules** - clean separation between engine and UI
+- **GitHub Pages Ready** - automatic deployment on push
+- **Progressive Web App** - works offline after first load
 
 ## 📈 Financial Modeling
 
 The engine implements sophisticated financial calculations:
 
-- **Loan Amortization**: Accurate interest and principal calculations
-- **Investment Growth**: Compound interest with end-of-month contributions
+- **Loan Amortization**: Accurate interest and principal calculations with overpayment effects
+- **Investment Growth**: Compound interest with end-of-month contributions for fair comparison
 - **Risk Analysis**: Sensitivity analysis and break-even computation
-- **Fair Comparison**: Both paths track wealth for the original loan term
+- **Fair Timeline**: Both paths track wealth for the original loan term
 
 ## 🎯 Use Cases
 
@@ -68,10 +77,30 @@ Perfect for UK borrowers deciding whether to:
 - Overpay their mortgage vs invest in ISAs/pensions
 - Pay off personal loans vs invest the money
 - Compare different loan strategies with various return assumptions
+- Understand the break-even point for investment returns
+
+## 🚀 Deployment
+
+This app automatically deploys to GitHub Pages when you push to the main branch. The deployment workflow:
+
+1. **Builds**: Static files (no build step needed)
+2. **Deploys**: Automatically to GitHub Pages
+3. **Available**: At `https://yourusername.github.io/uk-loan-visualizer/`
+
+To deploy to your own GitHub Pages:
+
+1. Fork this repository
+2. Go to Settings → Pages
+3. Select "GitHub Actions" as the source
+4. Push any changes to trigger deployment
 
 ---
 
 **Note**: This tool provides educational analysis only. Always consult with a qualified financial advisor for personalized advice.
+
+## 📄 License
+
+MIT License - feel free to use this tool and contribute improvements!
 This project is a design-first, client-side application built to provide a clear, intuitive, and powerful answer to a common financial question for UK consumers with existing loans: "What is the smartest way to use my extra money to pay off my loan early?"
 
 It intentionally avoids complex backend logic to focus on creating an exceptional user experience that empowers users to make informed financial decisions through data visualization and interaction design.

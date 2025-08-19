@@ -1,11 +1,10 @@
 # Dependencies (not needed for this project)
 node_modules/
-.pnpm-store/
 package-lock.json
 yarn.lock
 
-# IDE/Editor files
-.vscode/settings.json
+# IDE/Editor files (keep local)
+.vscode/
 .idea/
 *.swp
 *.tmp
@@ -13,14 +12,23 @@ yarn.lock
 # OS files
 .DS_Store
 Thumbs.db
+.DS_Store?
+._*
 
 # Log files
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Environment variables (if needed)
 .env
 .env.local
+.env.production
+
+# Build outputs (if any)
+dist/
+build/
 *.swo
 *~
 
