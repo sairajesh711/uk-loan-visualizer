@@ -1,253 +1,314 @@
-import type { LoanInput, RepaymentJourney, Simulation, ScheduleEntry } from "./types";
+// apps/web/main.ts
 
-// ---------- Value Object ----------
-export class Money {
-  readonly pence: number;
-  constructor(pence: number) {
-    if (!Number.isFinite(pence)) throw new Error("Money: non-finite value");
-    this.pence = Math.round(pence);
-  }
-  static fromPounds(amount: number): Money {
-    if (!Number.isFinite(amount)) throw new Error("Money: invalid pounds");
-    return new Money(Math.round(amount * 100));
-  }
-  static fromPence(p: number): Money { return new Money(p); }
-  add(m: Money): Money { return Money.fromPence(this.pence + m.pence); }
-  sub(m: Money): Money { return Money.fromPence(this.pence - m.pence); }
-  min(m: Money): Money { return Money.fromPence(Math.min(this.pence, m.pence)); }
-  max(m: Money): Money { return Money.fromPence(Math.max(this.pence, m.pence)); }
-  isNegative(): boolean { return this.pence < 0; }
-  isZero(): boolean { return this.pence === 0; }
-  toNumber(): number { return this.pence / 100; } // pounds
-  clampNonNegative(): Money { return this.pence < 0 ? Money.fromPence(0) : this; }
+// The .js extension is required for browser ES modules.
+// Your bundler/compiler will know how to resolve this to the .ts file.
+import { calculateDualLedgerJourney } from '../../packages/engine/src/index.js';
+import type { Inputs, DualLedgerOutput } from '../../packages/engine/src/types';
+
+// Tell TypeScript that Chart.js is available globally on the window object
+declare const Chart: any;
+
+let engine: { calculateDualLedgerJourney: (inputs: Inputs) => DualLedgerOutput } | null = null;
+
+const $ = (s: string): HTMLElement | null => document.querySelector(s);
+const fmtGBP = (n: number) => (Number.isFinite(n) ? n : 0).toLocaleString("en-GB", { style:"currency", currency:"GBP", maximumFractionDigits:0 });
+const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
+const addMonths = (d: Date, m: number): Date => { const x = new Date(d.getTime()); const day = x.getDate(); x.setMonth(x.getMonth() + m); if (x.getDate() < day) x.setDate(0); return x; };
+const mmmYYYY = (d: Date) => d.toLocaleDateString("en-GB", { month:"short", year:"numeric" });
+
+// Elements
+const elTypeMortgage = $<HTMLInputElement>("#loanType-mortgage");
+const elTypePersonal = $<HTMLInputElement>("#loanType-personal");
+const elOutstanding = $<HTMLInputElement>("#outstandingBalance");
+const elMonths = $<HTMLInputElement>("#remainingTermMonths");
+const elApr = $<HTMLInputElement>("#interestApr");
+const elOverpay = $<HTMLInputElement>("#overpayMonthly");
+const elOverpayValue = $<HTMLSpanElement>("#overpayValue");
+const elExpectedReturn = $<HTMLInputElement>("#expectedReturn");
+const elExpectedReturnValue = $<HTMLSpanElement>("#expectedReturnValue");
+
+const kpiRequired = $<HTMLElement>("#kpi-requiredPayment");
+const kpiOverpay = $<HTMLElement>("#kpi-overpay");
+const kpiOutflow = $<HTMLElement>("#kpi-outflow");
+
+const outPayoffDate = $<HTMLElement>("#result-payoffDate");
+const outInterestSaved = $<HTMLElement>("#result-interestSaved");
+const outMonthsSaved = $<HTMLElement>("#result-monthsSaved");
+const outOverpayPot = $<HTMLElement>("#result-overpayPot");
+const outInvestPot = $<HTMLElement>("#result-investPot");
+const outBreakEven = $<HTMLElement>("#result-breakEvenRate");
+const chipOriginal = $<HTMLElement>("#chip-originalPayoff");
+const chipExpected = $<HTMLElement>("#chip-expectedReturn");
+
+const decisionBanner = $<HTMLElement>("#decisionBanner");
+const decisionTitle = $<HTMLElement>("#decisionTitle");
+const decisionDelta = $<HTMLElement>("#decisionDelta");
+
+const banner = $<HTMLElement>("#errorBanner");
+const bannerText = $<HTMLElement>("#errorText");
+
+let balanceChart: any = null, oppLineChart: any = null;
+
+const placeholders = {
+  mortgage: { outstanding:"250000", months:"300", apr:"4.25", sliderMax:5000, sliderStep:50 },
+  personal: { outstanding:"10000", months:"60", apr:"9.9", sliderMax:1000, sliderStep:25 },
+};
+const DEFAULT_RECOMMENDED_RATE = 5.0;
+
+function showError(msg: string){ if(bannerText) bannerText.textContent=String(msg||"Invalid input."); banner?.classList.remove("d-none"); }
+function clearError(){ if(bannerText) bannerText.textContent=""; banner?.classList.add("d-none"); }
+
+if (window.Chart && (window as any)["chartjs-plugin-annotation"]) {
+  Chart.register((window as any)["chartjs-plugin-annotation"]);
 }
 
-// ---------- Entity ----------
-export class Loan {
-  readonly principal: Money;
-  readonly remainingMonths: number;
-  readonly aprPercent: number;
-
-  constructor(params: { principal: Money; remainingMonths: number; aprPercent: number }) {
-    const { principal, remainingMonths, aprPercent } = params;
-    if (!(principal instanceof Money)) throw new Error("Loan: principal must be Money");
-    if (!Number.isInteger(remainingMonths) || remainingMonths < 1) throw new Error("Loan: remainingMonths must be >= 1");
-    if (!Number.isFinite(aprPercent) || aprPercent < 0) throw new Error("Loan: aprPercent must be >= 0");
-    this.principal = principal;
-    this.remainingMonths = remainingMonths;
-    this.aprPercent = aprPercent;
-  }
-
-  monthlyRate(): number {
-    return this.aprPercent === 0 ? 0 : (this.aprPercent / 100) / 12;
-  }
-
-  requiredMonthlyPayment(): Money {
-    // Amortize current outstanding over remainingMonths.
-    const P = this.principal.toNumber(); // pounds
-    const n = this.remainingMonths;
-    const r = this.monthlyRate();
-    let paymentPounds: number;
-    if (r === 0) {
-      paymentPounds = P / n;
-    } else {
-      const denom = 1 - Math.pow(1 + r, -n);
-      paymentPounds = (P * r) / denom;
-    }
-    return Money.fromPounds(paymentPounds);
+async function loadEngine(){
+  try {
+    engine = await import('../../packages/engine/src/index.js');
+  } catch(e){
+    showError("Engine failed to load. Please build it and reload.");
+    console.error(e);
   }
 }
+loadEngine();
 
-// ---------- Domain Service ----------
-export class OverpaymentSimulator {
-  constructor(private readonly loan: Loan) {}
+function applyTypeUI(){
+  const type = elTypeMortgage?.checked ? "mortgage" : "personal";
+  const p = placeholders[type];
+  if(!elOutstanding || !elMonths || !elApr || !elOverpay || !elExpectedReturn || !elOverpayValue || !elExpectedReturnValue) return;
 
-  simulate(monthlyOverpayment: Money): Simulation {
-    if (monthlyOverpayment.isNegative()) throw new Error("monthlyOverpayment cannot be negative");
-
-    const schedule: ScheduleEntry[] = [];
-    const r = this.loan.monthlyRate();
-    const requiredPay = this.loan.requiredMonthlyPayment();
-
-    let balance = this.loan.principal;
-    let month = 0;
-    let totalInterest = Money.fromPence(0);
-
-    const MAX_MONTHS = this.loan.remainingMonths + 6000; // safety cap
-
-    while (!balance.isZero() && month < MAX_MONTHS) {
-      const opening = balance;
-
-      // Round monthly interest to the nearest penny (UK statements style)
-      const interest = Money.fromPence(Math.round(opening.pence * r));
-
-      const plannedPayment = requiredPay.add(monthlyOverpayment);
-      let principalPay = plannedPayment.sub(interest);
-      if (principalPay.isNegative()) principalPay = Money.fromPence(0);
-
-      principalPay = principalPay.min(opening); // don't go below zero
-      const closing = opening.sub(principalPay);
-
-      schedule.push({
-        monthIndex: month,
-        openingBalance: opening.toNumber(),
-        interest: interest.toNumber(),
-        principal: principalPay.toNumber(),
-        overpayment: monthlyOverpayment.toNumber(),
-        requiredPayment: requiredPay.toNumber(),
-        closingBalance: closing.toNumber()
-      });
-
-      totalInterest = totalInterest.add(interest);
-      balance = closing;
-      month += 1;
-    }
-
-    return {
-      schedule,
-      months: schedule.length,
-      totalInterest: totalInterest.toNumber()
-    };
+  elOutstanding.placeholder = p.outstanding;
+  elMonths.placeholder = p.months;
+  elApr.placeholder = p.apr;
+  elOverpay.max = String(p.sliderMax);
+  elOverpay.step = String(p.sliderStep);
+  elOverpay.value = String(Math.min(Number(elOverpay.value||0), p.sliderMax));
+  elOverpayValue.textContent = fmtGBP(Number(elOverpay.value||0));
+  
+  if (!elExpectedReturn.dataset.setOnce){
+    elExpectedReturn.value = String(DEFAULT_RECOMMENDED_RATE);
+    elExpectedReturnValue.textContent = `${DEFAULT_RECOMMENDED_RATE.toFixed(1)}%`;
+    elExpectedReturn.dataset.setOnce = "1";
+    activatePresetButton("risk-moderate");
   }
+  recompute();
 }
 
-// ---------- NEW: Investment projector ----------
-interface ReturnPolicy { monthlyRate(monthIndex: number): number; }
+function readInputs(): Inputs {
+    const outstanding = clamp(Number(elOutstanding?.value||elOutstanding?.placeholder||0), 0, Number.MAX_SAFE_INTEGER);
+    const months = Math.max(1, Math.floor(Number(elMonths?.value||elMonths?.placeholder||1)));
+    const apr = clamp(Number(elApr?.value||elApr?.placeholder||0), 0, 1000);
+    const overpay = clamp(Number(elOverpay?.value||0), 0, Number(elOverpay?.max||5000));
+    const expectedReturn = clamp(Number(elExpectedReturn?.value||0), 0, 100);
 
-class FixedAnnualReturn implements ReturnPolicy {
-  private readonly rMonthly: number;
-  constructor(annualRatePercent: number) {
-    const a = Math.max(0, annualRatePercent) / 100; // clamp negative to 0
-    this.rMonthly = Math.pow(1 + a, 1 / 12) - 1;     // effective monthly
-  }
-  monthlyRate(): number { return this.rMonthly; }
+    if(elOutstanding && Number(elOutstanding.value)!==outstanding) elOutstanding.value=String(outstanding);
+    if(elMonths && Number(elMonths.value)!==months) elMonths.value=String(months);
+    if(elApr && Number(elApr.value)!==apr) elApr.value=String(apr);
+    if(elOverpay && Number(elOverpay.value)!==overpay) elOverpay.value=String(overpay);
+    return { outstandingBalance:outstanding, remainingTermMonths:months, aprPercent:apr, monthlyOverpayment:overpay, expectedAnnualReturnPercent:expectedReturn };
 }
 
-class InvestmentProjector {
-  constructor(private readonly policy: ReturnPolicy) {}
+let scheduled=false;
+function schedule(){ if(scheduled) return; scheduled=true; queueMicrotask(()=>{scheduled=false; recompute();}); }
 
-  // DCA: invest 'contribution' each month, end-of-month timing
-  projectDCA(contribution: Money, months: number): Money {
-    if (months <= 0 || contribution.pence <= 0) return Money.fromPence(0);
-    const r = this.policy.monthlyRate(0);
-    if (Math.abs(r) < 1e-10) return Money.fromPence(contribution.pence * months);
-    const factor = (Math.pow(1 + r, months) - 1) / r;
-    return Money.fromPence(Math.round(contribution.pence * factor));
-  }
+function clearOutputs(){
+    const outputs = [outPayoffDate, outInterestSaved, outMonthsSaved, outOverpayPot, outInvestPot, outBreakEven, chipOriginal, kpiRequired, kpiOutflow];
+    outputs.forEach(el => { if(el) el.textContent="—"; });
 
-  // Annual return needed for FV(contribution, months) == targetFV
-  requiredAnnualReturn(contribution: Money, months: number, targetFV: Money): number {
-    if (targetFV.pence <= 0 || contribution.pence <= 0 || months <= 0) return 0;
-    
-    const target = targetFV.pence / contribution.pence;
-    
-    // If target is less than months, no positive return needed
-    if (target <= months) return 0;
-    
-    let lo = 0, hi = 0.5; // 0..50% monthly (very wide upper bound)
-    
-    // Binary search for monthly rate
-    for (let i = 0; i < 100; i++) {
-      const mid = (lo + hi) / 2;
-      const factor = mid === 0 ? months : (Math.pow(1 + mid, months) - 1) / mid;
-      
-      if (Math.abs(factor - target) < 1e-10) break; // Close enough
-      
-      if (factor < target) {
-        lo = mid;
-      } else {
-        hi = mid;
-      }
-    }
-    
-    const r_m = (lo + hi) / 2;
-    const r_annual = Math.pow(1 + r_m, 12) - 1;
-    return r_annual * 100;
-  }
+    if(decisionTitle) decisionTitle.textContent = "Enter your loan details";
+    if(decisionDelta) decisionDelta.textContent = "";
+    if(decisionBanner) decisionBanner.className = "decision tie";
+
+    if(balanceChart) { balanceChart.data.labels=[]; balanceChart.data.datasets.forEach((d:any)=>d.data=[]); balanceChart.update(); }
+    if(oppLineChart) { oppLineChart.data.labels=[]; oppLineChart.data.datasets.forEach((d:any)=>d.data=[]); oppLineChart.update(); }
 }
 
-// ---------- Facade: pure function ----------
-export function calculateRepaymentJourney(input: LoanInput & {
-  expectedAnnualReturnPercent?: number; // NEW optional
-  fairCompare?: boolean;                // NEW optional
-}): RepaymentJourney & {
-  invest: {
-    expectedAnnualReturnPercent: number;
-    fvInvest: number;                   // invest overpayment (DCA) until baseline end
-    deltaVsOverpaySimple: number;       // fvInvest - interestSaved
-    requiredAnnualReturnPercent: number;// break-even vs overpay (simple)
-    fair?: {
-      reinvestFreedPaymentFV: number;   // invest regular payment after early payoff
-      deltaNetWorth: number;            // fair.reinvestFreedPaymentFV - fvInvest
-    }
-  }
-} {
-  const {
-    outstandingBalance,
-    remainingTermMonths,
-    aprPercent,
-    monthlyOverpayment,
-    expectedAnnualReturnPercent = 0,
-    fairCompare = true
-  } = input;
+function buildBalanceSeries(res: DualLedgerOutput){
+  const L = Math.max(res.baseline.months, res.withOverpay.months);
+  const labels = Array.from({length:L+1}, (_,i)=>i);
+  const start = res.baseline.schedule[0]?.balance ?? 0;
+  const baseBalances = [start, ...res.baseline.schedule.map(e=>e.balance)];
+  const overBalances = [start, ...res.withOverpay.schedule.map(e=>e.balance)];
+  while(baseBalances.length < labels.length) baseBalances.push(null);
+  while(overBalances.length < labels.length) overBalances.push(null);
+  return { labels, baseBalances, overBalances, baseMonths:res.baseline.months, overMonths:res.withOverpay.months };
+}
 
-  const invalid =
-    !Number.isFinite(outstandingBalance) || outstandingBalance < 0 ||
-    !Number.isFinite(aprPercent) || aprPercent < 0 ||
-    !Number.isInteger(remainingTermMonths) || remainingTermMonths < 1 ||
-    !Number.isFinite(monthlyOverpayment) || monthlyOverpayment < 0;
+function buildApplesSeries(res: DualLedgerOutput){
+  const N = res.fair.investPath.months;
+  const M = res.withOverpay.months;
+  const labels = Array.from({length:N}, (_,i)=>i+1);
+  const wealthInvest = res.fair.investPath.schedule.map(p=>p.wealth);
+  const wealthOverpay = res.fair.overpayPath.schedule.map(p=>p.wealth);
+  return { labels, wealthInvest, wealthOverpay, M, N };
+}
 
-  if (invalid) {
-    throw new Error("Invalid inputs: values must be finite; balances/rates/overpayment >= 0; months >= 1.");
-  }
-
-  const loan = new Loan({
-    principal: Money.fromPounds(outstandingBalance),
-    remainingMonths: remainingTermMonths,
-    aprPercent
-  });
-
-  const sim = new OverpaymentSimulator(loan);
-  const baseline = sim.simulate(Money.fromPounds(0));
-  const withOverpay = sim.simulate(Money.fromPounds(monthlyOverpayment));
-
-  const interestSaved = Math.max(0, baseline.totalInterest - withOverpay.totalInterest);
-  const monthsSaved = Math.max(0, baseline.months - withOverpay.months);
-
-  // --- NEW: Investing the overpayment instead (simple H1 horizon) ---
-  const projector = new InvestmentProjector(new FixedAnnualReturn(expectedAnnualReturnPercent));
-  const fvInvest = projector.projectDCA(Money.fromPounds(monthlyOverpayment), baseline.months).toNumber();
-  const requiredAnnualReturnPercent =
-    projector.requiredAnnualReturn(Money.fromPounds(monthlyOverpayment), baseline.months, Money.fromPounds(interestSaved));
-  const deltaVsOverpaySimple = fvInvest - interestSaved;
-
-  // --- NEW: Fair compare (invest freed regular payment after early payoff) ---
-  let fair: { reinvestFreedPaymentFV: number; deltaNetWorth: number } | undefined = undefined;
-  if (fairCompare && monthsSaved > 0) {
-    const regularPayment = loan.requiredMonthlyPayment(); // baseline required payment
-    const freedMonths = monthsSaved;
-    const reinvestFV = projector.projectDCA(regularPayment, freedMonths).toNumber();
-    fair = {
-      reinvestFreedPaymentFV: reinvestFV,
-      deltaNetWorth: reinvestFV - fvInvest
-    };
-  }
-
-  return {
-    baseline,
-    withOverpay,
-    interestSaved,
-    monthsSaved,
-    schedule: withOverpay.schedule,
-    invest: {
-      expectedAnnualReturnPercent,
-      fvInvest,
-      deltaVsOverpaySimple,
-      requiredAnnualReturnPercent,
-      fair
-    }
+function upsertBalanceChart(series: any){
+  const ctx = ($("#balanceChart") as HTMLCanvasElement)?.getContext("2d"); if(!ctx || !Chart) return;
+  const annotations = {
+    base: { type:"line", xMin:series.baseMonths, xMax:series.baseMonths, borderColor:"rgba(239,68,68,.7)", borderWidth:2,
+      label:{enabled:true, content:`Original: ${mmmYYYY(addMonths(new Date(), series.baseMonths))}`} },
+    over: { type:"line", xMin:series.overMonths, xMax:series.overMonths, borderColor:"rgba(34,197,94,.7)", borderWidth:2,
+      label:{enabled:true, content:`Overpay: ${mmmYYYY(addMonths(new Date(), series.overMonths))}`} }
   };
+  if(!balanceChart){
+    balanceChart = new Chart(ctx, {
+      type:"line", data:{ labels: series.labels,
+        datasets:[
+          { label:"Original Balance", data:series.baseBalances, borderWidth:2, pointRadius:0, tension:.15, borderColor:"rgb(239,68,68)", backgroundColor:"rgba(239,68,68,.1)" },
+          { label:"Overpayment Balance", data:series.overBalances, borderWidth:2, pointRadius:0, tension:.15, borderColor:"rgb(34,197,94)", backgroundColor:"rgba(34,197,94,.1)" },
+        ]},
+      options:{
+        responsive:true, animation:false, interaction:{mode:"index", intersect:false},
+        scales:{ x:{ title:{display:true, text:"Months from now"} },
+                 y:{ title:{display:true, text:"Outstanding balance (£)"}, ticks:{ callback:(v: number)=>fmtGBP(v) } } },
+        plugins:{ tooltip:{ callbacks:{ label:(c:any)=>`${c.dataset.label}: ${fmtGBP(c.parsed.y)}` } }, legend:{display:true}, annotation:{annotations} }
+      }
+    });
+  } else {
+    balanceChart.data.labels = series.labels;
+    balanceChart.data.datasets[0].data = series.baseBalances;
+    balanceChart.data.datasets[1].data = series.overBalances;
+    balanceChart.options.plugins.annotation = { annotations };
+    balanceChart.update();
+  }
 }
 
-export type { LoanInput, RepaymentJourney, Simulation, ScheduleEntry };
-export { FixedAnnualReturn, InvestmentProjector };
+function upsertWealthChart(series: any){
+    const ctx = ($("#oppLineChart") as HTMLCanvasElement)?.getContext("2d"); if(!ctx || !Chart) return;
+    const ann = {
+      annotations:{
+        phase:{ type:"box", xMin: series.M, xMax: series.N, backgroundColor:"rgba(34,197,94,0.06)", borderWidth:0 },
+        mline:{ type:"line", xMin: series.M, xMax: series.M, borderColor:"rgba(34,197,94,.7)", borderWidth:2, label:{enabled:true, content:`Loan cleared (month ${series.M})`} }
+      }
+    };
+    if(!oppLineChart){
+      oppLineChart = new Chart(ctx, {
+        type:"line", data:{ labels: series.labels,
+          datasets:[
+            { label:"Net Wealth (Invest Path)", data:series.wealthInvest, borderWidth:2, pointRadius:0, tension:.15, borderColor:"rgb(59,130,246)", fill:false },
+            { label:"Net Wealth (Overpay Path)", data:series.wealthOverpay, borderWidth:2, pointRadius:0, tension:.15, borderColor:"rgb(34,197,94)", fill:false },
+          ]},
+        options:{
+          responsive:true, animation:false, interaction:{mode:"index", intersect:false},
+          scales:{ x:{ title:{display:true, text:"Months from now (Original Loan Term)"} },
+                   y:{ title:{display:true, text:"Net Wealth (£)"}, beginAtZero:true, ticks:{ callback:(v:number)=>fmtGBP(v) } } },
+          plugins:{ tooltip:{ callbacks:{ label:(c:any)=>`${c.dataset.label}: ${fmtGBP(c.parsed.y)}` } }, legend:{display:true}, annotation:ann }
+        }
+      });
+    } else {
+      oppLineChart.data.labels = series.labels;
+      oppLineChart.data.datasets[0].data = series.wealthInvest;
+      oppLineChart.data.datasets[1].data = series.wealthOverpay;
+      oppLineChart.options.plugins.annotation = ann;
+      oppLineChart.update();
+    }
+}
+
+function updateDecision(delta: number){
+  if (!decisionTitle || !decisionDelta || !decisionBanner) return;
+  if (Math.abs(delta) < 1000){
+    decisionTitle.textContent = "It's a close call";
+    decisionDelta.textContent = "Outcomes are very similar";
+    decisionBanner.className = "decision tie";
+  } else if (delta > 0){
+    decisionTitle.textContent = "Overpaying looks stronger";
+    decisionDelta.textContent = `by ≈ ${fmtGBP(delta)}`;
+    decisionBanner.className = "decision win-overpay";
+  } else {
+    decisionTitle.textContent = "Investing looks stronger";
+    decisionDelta.textContent = `by ≈ ${fmtGBP(-delta)}`;
+    decisionBanner.className = "decision win-invest";
+  }
+}
+
+function recompute(){
+    clearError();
+    if (elOverpayValue) elOverpayValue.textContent = fmtGBP(Number(elOverpay?.value||0));
+    if (elExpectedReturnValue) elExpectedReturnValue.textContent = `${Number(elExpectedReturn?.value||0).toFixed(1)}%`;
+    if(!engine) { return; }
+
+    const inputs = readInputs();
+    if(!Number.isFinite(inputs.outstandingBalance) || inputs.outstandingBalance <= 0){
+      clearOutputs();
+      return;
+    }
+
+    try {
+      const res: DualLedgerOutput = engine.calculateDualLedgerJourney(inputs);
+
+      const R = res.requiredMonthlyPayment;
+      if (kpiRequired) kpiRequired.textContent = fmtGBP(R);
+      if (kpiOverpay) kpiOverpay.textContent = fmtGBP(inputs.monthlyOverpayment);
+      if (kpiOutflow) kpiOutflow.textContent = fmtGBP(R + inputs.monthlyOverpayment);
+
+      if (outPayoffDate) outPayoffDate.textContent = mmmYYYY(addMonths(new Date(), res.withOverpay.months));
+      if (outInterestSaved) outInterestSaved.textContent = fmtGBP(res.interestSaved);
+      if (outMonthsSaved) outMonthsSaved.textContent = String(res.monthsSaved);
+      if (outOverpayPot) outOverpayPot.textContent = fmtGBP(res.fair.atN.overpayPot);
+      if (outInvestPot) outInvestPot.textContent = fmtGBP(res.fair.atN.investPot);
+
+      const originalDate = mmmYYYY(addMonths(new Date(), res.baseline.months));
+      if (chipOriginal) chipOriginal.textContent = originalDate;
+
+      const rStar = res.fair.breakEvenAnnualReturnPercent;
+      if (outBreakEven) outBreakEven.textContent = Number.isFinite(rStar) ? `${rStar.toFixed(2)}%` : "N/A";
+      if (chipExpected) chipExpected.textContent = `${inputs.expectedAnnualReturnPercent.toFixed(1)}%`;
+
+      const bal = buildBalanceSeries(res);
+      upsertBalanceChart(bal);
+      const apples = buildApplesSeries(res);
+      upsertWealthChart(apples);
+      
+      updateDecision(res.fair.atN.delta);
+
+    } catch(e: any){
+      clearOutputs();
+      showError(e?.message || "Could not compute results. Please check your inputs.");
+      console.error(e);
+    }
+}
+
+function activatePresetButton(id: string){
+  ["risk-cautious","risk-moderate","risk-aggressive"].forEach(k=>{
+    const btn = $(`#${k}`);
+    if(!btn) return;
+    (k===id) ? btn.classList.add("active") : btn.classList.remove("active");
+  });
+}
+
+["risk-cautious","risk-moderate","risk-aggressive"].forEach(id=>{
+  $(`#${id}`)?.addEventListener("click", (e)=>{
+    const rate = Number((e.currentTarget as HTMLElement)?.dataset?.rate || 0);
+    if(elExpectedReturn) elExpectedReturn.value = String(rate);
+    if(elExpectedReturnValue) elExpectedReturnValue.textContent = `${rate.toFixed(1)}%`;
+    activatePresetButton(id);
+    recompute();
+  });
+});
+
+[elTypeMortgage, elTypePersonal].forEach(el=>el?.addEventListener("change", applyTypeUI));
+[elOutstanding, elMonths, elApr, elOverpay, elExpectedReturn].forEach(el => {
+    el?.addEventListener("input", schedule);
+    el?.addEventListener("change", schedule);
+});
+
+$("#preset-mortgage")?.addEventListener("click", ()=>{
+    if(!elTypeMortgage || !elTypePersonal || !elOutstanding || !elMonths || !elApr || !elOverpay || !elExpectedReturn) return;
+    elTypeMortgage.checked=true; elTypePersonal.checked=false;
+    elOutstanding.value="250000"; elMonths.value="300"; elApr.value="4.5"; elOverpay.value="200";
+    elExpectedReturn.value = "5.0";
+    activatePresetButton("risk-moderate");
+    applyTypeUI();
+});
+
+$("#preset-personal")?.addEventListener("click", ()=>{
+    if(!elTypeMortgage || !elTypePersonal || !elOutstanding || !elMonths || !elApr || !elOverpay || !elExpectedReturn) return;
+    elTypePersonal.checked=true; elTypeMortgage.checked=false;
+    elOutstanding.value="10000"; elMonths.value="60"; elApr.value="9.9"; elOverpay.value="50";
+    elExpectedReturn.value = "5.0";
+    activatePresetButton("risk-moderate");
+    applyTypeUI();
+});
+
+applyTypeUI();

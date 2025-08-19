@@ -1,9 +1,14 @@
 {
   "name": "uk-loan-visualizer",
-  "private": true,
+  "version": "1.0.0",
+  "description": "UK Loan vs Investment Decision Tool",
+  "type": "module",
+  "main": "apps/web/main.js",
   "scripts": {
-    "build": "pnpm -r build",
-    "test": "pnpm -r test",
-    "lint": "pnpm -r lint"
-  }
+    "start": "npx serve apps/web -l 3000",
+    "dev": "npx serve apps/web -l 3000"
+  },
+  "keywords": ["loan", "investment", "finance", "uk", "calculator"],
+  "author": "Your Name",
+  "license": "MIT"
 }

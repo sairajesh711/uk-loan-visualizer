@@ -1,4 +1,77 @@
-UK Loan Overpayment & Investment Visualizer
+# UK Loan Visualizer
+
+A financial decision tool that helps you compare **overpaying your loan** vs **investing the money** using apples-to-apples wealth comparison.
+
+## 🚀 Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/sairajesh711/uk-loan-visualizer.git
+cd uk-loan-visualizer
+
+# Start the application
+npm run start
+```
+
+The app will be available at **http://localhost:3000**
+
+## 💡 Key Features
+
+- **Apples-to-Apples Comparison**: Both strategies run for the same timeframe (original loan term)
+- **Fair Compounding**: Investment contributions happen at month-end for accurate comparison
+- **Break-Even Analysis**: Calculates the exact return rate where strategies break even
+- **Interactive Visualizations**: Real-time charts showing balance reduction and wealth comparison
+- **Decision Support**: Clear recommendations based on financial outcomes
+
+## 🏗️ Architecture
+
+This is now a **simple standalone implementation**:
+
+```
+uk-loan-visualizer/
+├── apps/web/
+│   ├── index.html      # Main UI with Bootstrap styling
+│   ├── main.js         # UI logic and chart rendering
+│   └── engine.js       # Financial calculation engine (ES module)
+├── package.json        # Simple project config
+└── README.md
+```
+
+## 📊 How It Works
+
+1. **Dual-Ledger Simulation**: Runs parallel simulations for debt reduction and investment growth
+2. **Wealth Tracking**: Compares net wealth (investments - remaining debt) over time
+3. **Break-Even Calculation**: Uses bisection search to find the return rate where outcomes are equal
+4. **Visual Analysis**: Interactive Chart.js visualizations with crossover markers
+
+## 🔧 Development
+
+The project uses vanilla JavaScript with ES modules:
+
+- **No build step required** - just serve the files
+- **No dependencies** - uses CDN for Chart.js and Bootstrap
+- **Module imports** - clean separation between engine and UI
+- **TypeScript-style JSDoc** - for better code documentation
+
+## 📈 Financial Modeling
+
+The engine implements sophisticated financial calculations:
+
+- **Loan Amortization**: Accurate interest and principal calculations
+- **Investment Growth**: Compound interest with end-of-month contributions
+- **Risk Analysis**: Sensitivity analysis and break-even computation
+- **Fair Comparison**: Both paths track wealth for the original loan term
+
+## 🎯 Use Cases
+
+Perfect for UK borrowers deciding whether to:
+- Overpay their mortgage vs invest in ISAs/pensions
+- Pay off personal loans vs invest the money
+- Compare different loan strategies with various return assumptions
+
+---
+
+**Note**: This tool provides educational analysis only. Always consult with a qualified financial advisor for personalized advice.
 This project is a design-first, client-side application built to provide a clear, intuitive, and powerful answer to a common financial question for UK consumers with existing loans: "What is the smartest way to use my extra money to pay off my loan early?"
 
 It intentionally avoids complex backend logic to focus on creating an exceptional user experience that empowers users to make informed financial decisions through data visualization and interaction design.

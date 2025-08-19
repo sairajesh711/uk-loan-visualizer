@@ -1,23 +1,26 @@
-# Dependencies
-node_modules
-.pnpm-store
-
-# Build outputs
-dist
-build
-*.tsbuildinfo
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Dependencies (not needed for this project)
+node_modules/
+.pnpm-store/
+package-lock.json
+yarn.lock
 
 # IDE/Editor files
 .vscode/settings.json
-.idea
+.idea/
 *.swp
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+npm-debug.log*
+
+# Environment variables (if needed)
+.env
+.env.local
 *.swo
 *~
 
